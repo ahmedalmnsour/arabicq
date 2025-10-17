@@ -5,6 +5,8 @@ import { QuizContainer } from '@/components/quiz/QuizContainer';
 import { fetchLessonById } from '@/lib/fetchLessons';
 import { TEXT } from '@/constants/text';
 
+export const revalidate = 0;
+
 interface LessonPageProps {
   params: {
     grade: string;

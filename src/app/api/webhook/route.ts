@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(request: NextRequest) {
   try {
-    // التحقق من Webhook Secret
-    const secret = request.headers.get('sanity-webhook-secret');
+    // جلب Secret من Body أو Headers
+    const body = await request.json();
+    const secretFromBody = body.secret;
+    const secretFromHeader = request.headers.get('x-sanity-webhook-secret');
     
-    if (secret !== process.env.SANITY_WEBHOOK_SECRET) {
+    const receivedSecret = secretFromBody || secretFromHeader;
+    
+    if (receivedSecret !== process.env.SANITY_WEBHOOK_SECRET) {
+      console.log('❌ Invalid secret:', { receivedSecret, expected: process.env.SANITY_WEBHOOK_SECRET?.substring(0, 10) + '...' });
       return NextResponse.json(
         { error: 'Invalid webhook secret' },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
-    
-    // إعادة بناء جميع الصفحات المرتبطة بالدروس
-    revalidateTag('lesson');
-    revalidateTag('question');
-    
-    // إعادة بناء الصفحة الرئيسية
-    revalidatePath('/');
+    // إعادة بناء جميع المسارات
+    revalidatePath('/', 'layout');
 
     console.log('✅ Webhook received - Cache revalidated');
 
